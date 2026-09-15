@@ -69,14 +69,13 @@ e13-openspec/              ← 本仓库
 
 ```sh
 npm install -g @fission-ai/openspec@latest
-openspec update
 ```
 
 此外还需要一个支持 skill 的 AI 编程助手（如 Trae、Codex 等）来调用各 skill。
 
 ## 安装
 
-### macOS / Linux（bash / zsh）
+### Linux / macOS（bash / zsh）
 
 ```sh
 cp e13-openspec ~/bin/
@@ -113,8 +112,6 @@ Copy-Item -Recurse templates $HOME\bin\templates
 # 将以下行加入 $PROFILE（若不存在可先运行 New-Item -Type File -Force $PROFILE）
 $env:PATH = "$HOME\bin;$env:PATH"
 ```
-
-> **提示：** Windows 用户也可以通过 [Git Bash](https://git-scm.com/) 使用 bash 版脚本，安装方式与 macOS / Linux 相同。
 
 ## 使用
 

@@ -41,7 +41,8 @@ propose → apply → e13-verify → (e13-fix → e13-verify)* → archive
 
 ```
 e13-openspec/              ← 本仓库
-├── e13-openspec           ← init 脚本（zsh）
+├── e13-openspec           ← init 脚本（bash，兼容 zsh）
+├── e13-openspec.ps1       ← init 脚本（PowerShell，Windows 原生）
 ├── templates/
 │   ├── .agents/
 │   │   └── skills/
@@ -66,7 +67,7 @@ e13-openspec/              ← 本仓库
 
 本项目的所有 skill 都依赖 [openspec CLI](https://www.npmjs.com/package/@fission-ai/openspec)（`@fission-ai/openspec`），需先安装：
 
-```zsh
+```sh
 npm install -g @fission-ai/openspec@latest
 openspec update
 ```
@@ -75,7 +76,9 @@ openspec update
 
 ## 安装
 
-```zsh
+### macOS / Linux（bash / zsh）
+
+```sh
 cp e13-openspec ~/bin/
 chmod +x ~/bin/e13-openspec
 cp -r templates/ ~/bin/templates
@@ -83,20 +86,56 @@ cp -r templates/ ~/bin/templates
 
 确保 `~/bin` 在 `PATH` 中：
 
-```zsh
+**bash 用户：**
+
+```sh
+echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**zsh 用户：**
+
+```sh
 echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc
 exec zsh
 ```
 
+### Windows（PowerShell）
+
+```powershell
+Copy-Item e13-openspec.ps1 $HOME\bin\
+Copy-Item -Recurse templates $HOME\bin\templates
+```
+
+确保 `$HOME\bin` 在 `PATH` 中：
+
+```powershell
+# 将以下行加入 $PROFILE（若不存在可先运行 New-Item -Type File -Force $PROFILE）
+$env:PATH = "$HOME\bin;$env:PATH"
+```
+
+> **提示：** Windows 用户也可以通过 [Git Bash](https://git-scm.com/) 使用 bash 版脚本，安装方式与 macOS / Linux 相同。
+
 ## 使用
+
+### macOS / Linux
 
 在项目目录下运行：
 
-```zsh
+```sh
 cd /path/to/your-project
 e13-openspec init        # 初始化 .agents/ 和 openspec/（已存在则跳过）
 e13-openspec init -f     # 强制覆盖已存在的目录
 e13-openspec help        # 查看用法
+```
+
+### Windows（PowerShell）
+
+```powershell
+cd C:\path\to\your-project
+.\e13-openspec.ps1 init        # 初始化 .agents/ 和 openspec/（已存在则跳过）
+.\e13-openspec.ps1 init -f     # 强制覆盖已存在的目录
+.\e13-openspec.ps1 help        # 查看用法
 ```
 
 `init` 会将 `templates/` 下的 `.agents/` 和 `openspec/` 复制到当前目录。之后在 AI 编程助手中使用各 skill 即可。

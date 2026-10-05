@@ -134,6 +134,7 @@ $env:PATH = "$HOME\bin;$env:PATH"
 cd /path/to/your-project
 e13-openspec init        # 初始化 .agents/ 和 openspec/（已存在则跳过）
 e13-openspec init -f     # 强制覆盖已存在的目录
+e13-openspec update      # 更新 skill：删除旧的 openspec skill 后复制最新 skill
 e13-openspec help        # 查看用法
 ```
 
@@ -143,12 +144,13 @@ e13-openspec help        # 查看用法
 cd C:\path\to\your-project
 .\e13-openspec.ps1 init        # 初始化 .agents/ 和 openspec/（已存在则跳过）
 .\e13-openspec.ps1 init -f     # 强制覆盖已存在的目录
+.\e13-openspec.ps1 update      # 更新 skill：删除旧的 openspec skill 后复制最新 skill
 .\e13-openspec.ps1 help        # 查看用法
 ```
 
 `init` 会将 `templates/` 下的 `.agents/` 和 `openspec/` 复制到当前目录。之后在 AI 编程助手中使用各 skill 即可。
 
-已有项目的 `.agents/` 会被普通 `init` 跳过，不会自动获得此次 skill 更新。更新模板时也需更新目标项目的 skill 目录，替换原有的 propose/apply/update/archive 为上述 e13 名称，避免旧入口仍指向原版流程。
+已有项目的 `.agents/` 会被普通 `init` 跳过，不会自动获得此次 skill 更新。更新模板时，在目标项目里运行 `update` 即可：它会删除 `.agents/skills/` 下所有以 `openspec` 开头的旧 skill 目录（包括旧入口 `openspec-propose`、`openspec-apply-change`、`openspec-verify-change` 等），再把 `templates/.agents/skills/` 下的最新 skill 复制进去，因此不会残留指向原版流程的旧入口。`update` 只处理 skill 目录，不会改动 `openspec/` 下的 specs、changes 和 config，也不会动 `.agents/skills/` 里其他自定义 skill。
 
 ## 许可证
 

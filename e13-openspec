@@ -6,6 +6,7 @@
 #   cd /path/to/project
 #   e13-openspec init          # 已存在的目录会跳过
 #   e13-openspec init -f       # 已存在的目录会先删除再复制
+#   e13-openspec update        # 删除旧的 openspec skill 并复制最新 skill
 
 set -e
 
@@ -17,6 +18,7 @@ usage() {
   echo ""
   echo "命令:"
   echo "  init [-f]   将 .agents/ 和 openspec/ 复制到当前目录"
+  echo "  update      删除 .agents/skills/ 下原有的 openspec skill，并复制最新 skill"
 }
 
 case "${1:-}" in
@@ -43,6 +45,37 @@ case "${1:-}" in
       cp -R -- "${src_dir}/${d}" "${PWD}/"
       echo "✓ 已复制 ${d}"
     done
+    ;;
+
+  update)
+    src_skills="${src_dir}/.agents/skills"
+    dest_skills="${PWD}/.agents/skills"
+
+    if [[ ! -d "${src_skills}" ]]; then
+      echo "错误: 模板目录不存在: ${src_skills}" >&2
+      exit 1
+    fi
+
+    mkdir -p -- "${dest_skills}"
+
+    shopt -s nullglob
+    for old in "${dest_skills}"/openspec*; do
+      [[ -d "${old}" ]] || continue
+      rm -rf -- "${old}"
+      echo "✓ 已删除旧 skill: $(basename "${old}")"
+    done
+    shopt -u nullglob
+
+    for src in "${src_skills}"/openspec*; do
+      [[ -d "${src}" ]] || continue
+      cp -R -- "${src}" "${dest_skills}/"
+      echo "✓ 已复制 skill: $(basename "${src}")"
+    done
+
+    if [[ -f "${src_skills}/.openspec-target" && ! -e "${dest_skills}/.openspec-target" ]]; then
+      cp -- "${src_skills}/.openspec-target" "${dest_skills}/.openspec-target"
+      echo "✓ 已复制 .openspec-target"
+    fi
     ;;
 
   ""|help|-h|--help)

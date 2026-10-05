@@ -1,19 +1,24 @@
 # e13-openspec
 
-基于 [OpenSpec](https://github.com/Fission-AI/openspec)（[Fission-AI](https://github.com/Fission-AI) 开源的规范驱动开发框架）的个人定制版，用更强的证据式验证 + 修复闭环替换了上游的启发式验证 skill，并提供一个简化的 init 脚本。
+基于 [OpenSpec](https://github.com/Fission-AI/openspec)（[Fission-AI](https://github.com/Fission-AI) 开源的规范驱动开发框架）的个人定制版，提供实现交接、证据式验证、修复闭环和归档前验证检查，以及一个简化的 init 脚本。
 
 ## 与上游 OpenSpec 的关系
 
-本项目的 skills 中，以下 6 个直接来源于 OpenSpec 上游（[Fission-AI/openspec](https://github.com/Fission-AI/openspec)），MIT 许可证：
+本项目的 skills 中，以下 2 个保持 OpenSpec 上游（[Fission-AI/openspec](https://github.com/Fission-AI/openspec)）原样，MIT 许可证：
 
 | Skill                     | 用途                                                                |
 | ------------------------- | ------------------------------------------------------------------- |
-| `openspec-propose`        | 一键生成 change 的全部规划产物（proposal / specs / design / tasks） |
-| `openspec-apply-change`   | 按 tasks.md 逐步实现代码                                            |
-| `openspec-update-change`  | 修改已有规划产物并保持一致性                                        |
 | `openspec-explore`        | 进入探索模式，以思考伙伴身份协助梳理需求和方案                      |
 | `openspec-sync-specs`     | 将 change 中的 delta spec 合并到主 spec                             |
-| `openspec-archive-change` | 归档已完成的 change                                                 |
+
+以下 4 个基于上游 skill 做必要适配，目录名和 skill 名都加上 `e13`，保留 MIT 许可证和上游来源信息：
+
+| Skill                         | 适配内容 |
+| ----------------------------- | -------- |
+| `openspec-e13-propose`        | 规划流程保留，只将实现入口指向 e13 apply |
+| `openspec-e13-apply-change`   | 按 tasks 实现，持久化实现笔记与验证提醒，完成后交给 e13 verify |
+| `openspec-e13-update-change`  | 规划调整后重新打开需要实现的任务，衔接 e13 apply/verify/archive |
+| `openspec-e13-archive-change` | 同步 spec 和归档前检查当前实现的独立验证 PASS |
 
 上游还自带一个 `openspec-verify-change`（启发式检查，产出 CRITICAL / WARNING / SUGGESTION 三级建议）。本项目将其替换为以下 2 个 skill，同样以 MIT 许可证发布：
 
@@ -29,13 +34,19 @@
 本项目用证据式验证 + 修复闭环替换它：
 
 ```
-propose → apply → e13-verify → (e13-fix → e13-verify)* → archive
+e13-propose → e13-apply → e13-verify → (e13-fix → e13-verify)* → e13-archive
 ```
 
-- **e13-verify**：只读检查实现与 spec 的一致性，运行测试/lint/type check 等可执行验证，产出持久化的 `verification.md` 报告（含 finding ID、分类、repair status），给出正式 verdict（PASS / FAIL / BLOCKED），不修改任何代码
+- **e13-apply**：实现任务，在 change 目录中维护 `implementation-notes.md`，记录实现位置、技术决策、检查命令与结果、复现条件、易漏边界和阻塞项；完成、暂停和再次进入 `all_done` 时都提供交接
+- **e13-verify**：只读检查实现与 spec 的一致性，逐项核实 apply 的提醒，运行测试/lint/type check 等可执行验证，产出持久化的 `verification.md` 报告（含 finding ID、分类、repair status 和验证输入快照），给出正式 verdict（PASS / FAIL / BLOCKED），不修改任何代码
 - **e13-fix**：根据验证报告中 `category: implementation` 且 `repair status: pending` 的 findings 做最小化修复，修复后标记 `addressed-awaiting-verification`，交回 e13-verify 做独立确认
+- **e13-archive**：归档前读取验证报告，要求当前 change 的 PASS、没有未解决 finding，且报告的规划和实现输入快照仍有效；通过后才进行原有的同步与归档流程
 
 两者形成闭环：fix 不能自行声明验证通过，只有 verify 才能将 finding 标记为 `verified-resolved` 或给出最终 verdict。
+
+apply 的笔记由 apply 维护，verify 只读；验证报告由 verify 维护，fix 只更新修复状态和修复笔记。笔记中的结果和提醒都是待独立核实的线索，不能覆盖 spec、降低验收要求或决定 verdict。旧 change 没有实现笔记也可验证；旧报告若缺少可比较的验证输入快照，需要重新验证后才能通过 e13 archive。
+
+归档前的 PASS 检查由 skill 执行，不是 OpenSpec CLI 的强制校验；直接运行 CLI 归档命令不会执行这项检查。
 
 ## 目录结构
 
@@ -47,12 +58,12 @@ e13-openspec/              ← 本仓库
 │   ├── .agents/
 │   │   └── skills/
 │   │       ├── .openspec-target
-│   │       ├── openspec-propose/SKILL.md
-│   │       ├── openspec-apply-change/SKILL.md
-│   │       ├── openspec-update-change/SKILL.md
+│   │       ├── openspec-e13-propose/SKILL.md        ← 适配
+│   │       ├── openspec-e13-apply-change/SKILL.md   ← 适配
+│   │       ├── openspec-e13-update-change/SKILL.md  ← 适配
 │   │       ├── openspec-explore/SKILL.md
 │   │       ├── openspec-sync-specs/SKILL.md
-│   │       ├── openspec-archive-change/SKILL.md
+│   │       ├── openspec-e13-archive-change/SKILL.md ← 适配
 │   │       ├── openspec-e13-verify-change/SKILL.md   ← 新增
 │   │       └── openspec-e13-fix-change/SKILL.md       ← 新增
 │   └── openspec/
@@ -136,6 +147,8 @@ cd C:\path\to\your-project
 ```
 
 `init` 会将 `templates/` 下的 `.agents/` 和 `openspec/` 复制到当前目录。之后在 AI 编程助手中使用各 skill 即可。
+
+已有项目的 `.agents/` 会被普通 `init` 跳过，不会自动获得此次 skill 更新。更新模板时也需更新目标项目的 skill 目录，替换原有的 propose/apply/update/archive 为上述 e13 名称，避免旧入口仍指向原版流程。
 
 ## 许可证
 
